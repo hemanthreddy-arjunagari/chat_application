@@ -1,0 +1,49 @@
+name: Build and Push Docker Image to ACR
+
+on:
+  pull_request:
+    types: [ closed ]
+    branches: [ main ]
+  workflow_dispatch:
+    branches: [ main }
+
+permissions:
+      id-token: write
+      contents: read
+
+jobs:
+  sonarQube-Analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Check if repo Exists in SonarQube and create new repo If not Exists
+        run: |
+          export PROJECT_KEY=${{ secrets.SONAR_REPO }}
+          export SONAR_HOST_URL=${{  secrets.SONAR_HOST_URL  }}
+          response=$(curl -s -u ${{  secrets.SONAR_USERNAME  }}:${{  secrets.SONAR_PASSWORD  }} "$SONAR_HOST_URL/api/projects/search?projects=$PROJECT_KEY")
+          if echo "$response" | jq -e '.paging.total == 0' >/dev/null 2>&1; then
+              echo "Repo for this Application does not exist in SonarQube."
+              # Code to create a new project
+              echo "creating new repo"
+              curl -X POST -u ${{  secrets.SONAR_USERNAME  }}:${{  secrets.SONAR_PASSWORD  }} "$SONAR_HOST_URL/api/projects/create" -d "project=$PROJECT_KEY" -d "name=$PROJECT_KEY" -d "visibility=private"
+          fi
+
+      - name: dependency-check-report
+        run: |
+          curl -LO https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.2/dependency-check-10.0.2-release.zip
+          mkdir dependency-check
+          unzip dependency-check-10.0.2-release.zip -d dependency-check
+          npm install --legacy-peer-deps
+          dependency-check/dependency-check/bin/dependency-check.sh --out=. --project dfs-frontend-webapp -f HTML -f JSON --scan node_modules
+
+
+      - name: Push for sonarQube-Analysis
+        run: |
+          export PROJECT_KEY=${{ secrets.SONAR_REPO }}
+          export SONAR_HOST_URL=${{  secrets.SONAR_HOST_URL  }}
+          npm run test:coverage
+          sonar-scanner -Dsonar.token={{  secrets.SONAR_TOKEN  }}  -Dsonar.projectKey=$PROJECT_KEY -Dsonar.sources=.  -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info -Dsonar.exclusions=node_modules -Dsonar.exclusions=.scannerwork -Dsonar.dependencyCheck.htmlReportPath=*.html
+          ls
+          pwd
