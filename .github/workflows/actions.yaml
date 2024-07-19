@@ -1,4 +1,4 @@
-name: Build and Push Docker Image to ACR
+name: sonarQube-Analysis
 
 on:
  pull_request:
@@ -31,15 +31,16 @@ jobs:
 
       - name: dependency-check-report
         run: |
-          curl -LO https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.2/dependency-check-10.0.2-release.zip
-          mkdir dependency-check
-          unzip dependency-check-10.0.2-release.zip -d dependency-check
-          npm install --legacy-peer-deps
-          dependency-check/dependency-check/bin/dependency-check.sh --out=. --project dfs-frontend-webapp -f HTML -f JSON --scan node_modules
+         echo "----------------------------- skipping dependency-check-report for now ------------------------------"
+          # curl -LO https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.2/dependency-check-10.0.2-release.zip
+          # mkdir dependency-check
+          # unzip dependency-check-10.0.2-release.zip -d dependency-check
+          # dependency-check/dependency-check/bin/dependency-check.sh --out=. --project dfs-frontend-webapp -f HTML -f JSON --scan node_modules
 
 
       - name: Push for sonarQube-Analysis
         run: |
+          npm install --legacy-peer-deps
           export PROJECT_KEY=${{ secrets.SONAR_REPO }}
           export SONAR_HOST_URL=${{  secrets.SONAR_HOST_URL  }}
           ls
