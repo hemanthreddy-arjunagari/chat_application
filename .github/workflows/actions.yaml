@@ -40,9 +40,16 @@ jobs:
 
       - name: Push for sonarQube-Analysis
         run: |
+          echo "------------------------------------- skipping manual scanning also ---------------------------"
           npm install --legacy-peer-deps
           export PROJECT_KEY=${{ secrets.SONAR_REPO }}
           export SONAR_HOST_URL=${{  secrets.SONAR_HOST_URL  }}
           ls
           pwd
           sonar-scanner -Dsonar.token={{  secrets.SONAR_TOKEN  }}  -Dsonar.projectKey=$PROJECT_KEY -Dsonar.sources=.  -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.exclusions=node_modules -Dsonar.exclusions=.scannerwork -Dsonar.dependencyCheck.htmlReportPath=*.html
+                   
+         
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2.3.0
+        with:
+          args: -Dsonar.token={{  secrets.SONAR_TOKEN  }}  -Dsonar.projectKey=$PROJECT_KEY -Dsonar.sources=.  -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.exclusions=node_modules -Dsonar.exclusions=.scannerwork -Dsonar.dependencyCheck.htmlReportPath=*.html
