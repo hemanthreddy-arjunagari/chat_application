@@ -1,0 +1,14 @@
+name: check-on-prem-cluster-access
+
+on:
+  workflow_dispatch:
+
+
+jobs:
+  test-connection:
+    runs-on: self-hosted
+    steps:
+      - name: ssh
+        run: echo "Hi"
+
+      
